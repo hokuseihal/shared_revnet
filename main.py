@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('--epoch', default=10, type=int)
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--model', default='revnet18_r2')
+    parser.add_argument('--paramshare', default=1,type=int)
     parser.add_argument('--wandb', default=False, action='store_true')
     args = parser.parse_args()
     if (args.wandb): import wandb
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         T.ToTensor(),
         T.Normalize(0, 1),
     ])
-    model = modeldic[args.model](num_classes=100, parameter_share=2).to(device)
+    model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     trainloader = torch.utils.data.DataLoader(
         Dataset(train=True, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
