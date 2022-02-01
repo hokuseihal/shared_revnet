@@ -107,7 +107,7 @@ class Bottleneck(nn.Module):
 
 
 class RevNet(nn.Module):
-    def __init__(self, block, num_classes, num_block, k=2,
+    def __init__(self, block, num_classes, num_block, k=1,
                  block_feature=(64, 128, 256, 512),
                  groups=1,
                  width_per_group=64,
@@ -144,15 +144,15 @@ class RevNet(nn.Module):
 
         self.layers = ReversibleLayers(MU.deeplist2module(layers), innerlayers=[BasicBlock, Bottleneck])
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(block_feature[-1] * block.expansion, num_classes)
+        self.fc = nn.Linear(block_feature[-1] * block.expansion * (3 - k), num_classes)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-
-        x = self.layers(x)
+        # TODO fix double input
+        x = self.layers(torch.cat([x, x], dim=1))
 
         x = self.gap(x)
         x = torch.flatten(x, 1)
@@ -162,49 +162,49 @@ class RevNet(nn.Module):
 
 
 def revnet18(num_classes, **kwargs):
-    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[2, 2, 2, 2], **kwargs)
+    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[1, 1, 1, 1], **kwargs)
 
 
 def revnet18_r2(num_classes, **kwargs):
-    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[2, 2, 2, 2], block_feature=(90, 180, 360, 720),
+    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[1, 1, 1, 1], block_feature=(90, 180, 360, 720),
                   **kwargs)
 
 
 def revnet34(num_classes, **kwargs):
-    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[3, 4, 6, 3], **kwargs)
+    return RevNet(block=BasicBlock, num_classes=num_classes, num_block=[2, 2, 3, 2], **kwargs)
 
 
 def revnet50(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 6, 3], **kwargs)
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 2, 3, 2], **kwargs)
 
 
-def revnet101(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 23, 3], **kwargs)
+def revnet104(num_classes, **kwargs):
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[2, 2, 11, 2], **kwargs)
 
 
 def revnet152(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 8, 36, 3], **kwargs)
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 4, 18, 2], **kwargs)
 
 
 def revnext50_32x4d(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 6, 3], groups=32, width_per_group=4,
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 2, 3, 2], groups=32, width_per_group=4,
                   **kwargs)
 
 
-def revnext101_32x8d(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 23, 3], groups=32, width_per_group=4,
+def revnext104_32x8d(num_classes, **kwargs):
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 2, 12, 2], groups=32, width_per_group=4,
                   **kwargs)
 
 
 def wide_revnet50_2(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 6, 3], width_per_group=64 * 2, **kwargs)
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 2, 3, 2], width_per_group=64 * 2, **kwargs)
 
 
-def wide_revnet101_2(num_classes, **kwargs):
-    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[3, 4, 23, 3], width_per_group=64 * 2, **kwargs)
+def wide_revnet104_2(num_classes, **kwargs):
+    return RevNet(block=Bottleneck, num_classes=num_classes, num_block=[1, 2, 12, 2], width_per_group=64 * 2, **kwargs)
 
 
 models = {"revnet18": revnet18, "revnet18_r2": revnet18_r2, "revnet34": revnet34, "revnet50": revnet50,
-          "revnet101": revnet101, "revnet152": revnet152, "wide_revnet50_2": wide_revnet50_2,
-          "wide_revnet101_2": wide_revnet101_2, "revnext50_32x4d": revnext50_32x4d,
-          "revnext101_32x8d": revnext101_32x8d}
+          "revnet101": revnet104, "revnet152": revnet152, "wide_revnet50_2": wide_revnet50_2,
+          "wide_revnet101_2": wide_revnet104_2, "revnext50_32x4d": revnext50_32x4d,
+          "revnext101_32x8d": revnext104_32x8d}

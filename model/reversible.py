@@ -57,8 +57,8 @@ class _ReversivleLayers(torch.autograd.Function):
             if (type(layer0) in ctx.innerlayers):
                 y0, y1, dy0, dy1 = _Reversible._backward(y0, y1, dy0, dy1, layer0, layer1)
             else:
-                y0, dy0 = layer0._backward(dy0,y=y0)
-                y1, dy1 = layer1._backward(dy1,y=y1)
+                y0, dy0 = layer0._backward(dy0, y=y0)
+                y1, dy1 = layer1._backward(dy1, y=y1)
             # print(f"{y0=},{y1=},{dy0=},{dy1=}")
         return None, torch.cat([dy0, dy1], dim=1), None
 
