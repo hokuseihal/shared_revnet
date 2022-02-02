@@ -51,6 +51,9 @@ if __name__ == "__main__":
     parser.add_argument('--model', default='revnet18_r2')
     parser.add_argument('--paramshare', default=1,type=int)
     parser.add_argument('--wandb', default=False, action='store_true')
+    parser.add_argument('--lr', default=0.0001, type=float)
+    parser.add_argument('--optim',default='Adam')
+    parser.add_argument('--tag',default='')
     args = parser.parse_args()
     if (args.wandb): import wandb
 
@@ -61,7 +64,10 @@ if __name__ == "__main__":
         T.Normalize(0, 1),
     ])
     model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    if(args.optim=='adam'):
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     trainloader = torch.utils.data.DataLoader(
         Dataset(train=True, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
@@ -70,7 +76,7 @@ if __name__ == "__main__":
         Dataset(train=False, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
-    if (args.wandb): wandb.init(project='shared_revnet', name=args.model)
+    if (args.wandb): wandb.init(project='shared_revnet', name=args.model+args.tag)
     for e in range(args.epoch):
         operate('train')
         operate('val')
