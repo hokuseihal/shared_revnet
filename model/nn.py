@@ -39,3 +39,10 @@ class Upsample(nn.Module):
         input=self.input
         self.input=None
         return input,grad
+
+class PixelShuffle(nn.PixelShuffle):
+    def __init__(self):
+        super(PixelShuffle, self).__init__(upscale_factor=2)
+    def _forward(self, x):
+        x=super(x)
+        
