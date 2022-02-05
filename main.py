@@ -92,4 +92,5 @@ if __name__ == "__main__":
         operate('val')
         if(scheduler is not None):
             scheduler.step()
+            if(args.wandb):wandb.log({'lr':scheduler.get_lr()[0]})
     if (args.wandb): wandb.finish()
