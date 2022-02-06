@@ -34,8 +34,12 @@ def operate(phase):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+                if (scheduler is not None):
+                    scheduler.step(epoch=e*len(trainloader)+idx)
+                    if (args.wandb): wandb.log({'lr': scheduler.get_lr()[0]})
 
-            print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},{phase}")
+            print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},lr={optimizer.param_groups[0]['lr']},{phase}")
+
         mloss = np.mean(mloss)
         macc = np.mean(macc)
         print(f"{e},LOSS:{mloss},ACC:{macc}")
@@ -67,17 +71,6 @@ if __name__ == "__main__":
             (0.5070751592371323, 0.48654887331495095, 0.4409178433670343),
             (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)),
     ])
-    model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)
-    if (args.optim == 'adam'):
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    elif (args.optim == 'sgd'):
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
-    else:
-        assert False, "set correct optimizer"
-
-    scheduler=None
-    if (args.setting is not None):
-        optimizer, scheduler = get_optim_scheduler(args.setting, model, args.epoch)
     trainloader = torch.utils.data.DataLoader(
         Dataset(train=True, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
@@ -86,11 +79,21 @@ if __name__ == "__main__":
         Dataset(train=False, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
+    model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)
+    if (args.optim == 'adam'):
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    elif (args.optim == 'sgd'):
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+    else:
+        assert NotImplementedError
+
+    scheduler = None
+    if (args.setting is not None):
+        optimizer, scheduler = get_optim_scheduler(args.setting, model, args.epoch * len(trainloader))
+
     if (args.wandb): wandb.init(project='shared_revnet', name=args.model + args.tag)
     for e in range(args.epoch):
         operate('train')
         operate('val')
-        if(scheduler is not None):
-            scheduler.step()
-            if(args.wandb):wandb.log({'lr':scheduler.get_lr()[0]})
+
     if (args.wandb): wandb.finish()
