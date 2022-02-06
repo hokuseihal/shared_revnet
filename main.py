@@ -36,9 +36,9 @@ def operate(phase):
                 optimizer.zero_grad()
                 if (scheduler is not None):
                     scheduler.step(epoch=e*len(trainloader)+idx)
-                    if (args.wandb): wandb.log({'lr': scheduler.get_lr()[0]})
+                    if (args.wandb): wandb.log({'lr': optimizer.param_groups[0]['lr']})
 
-            print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},lr={optimizer.param_groups[0]['lr']},{phase}")
+            print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},lr={optimizer.param_groups[0]['lr']:.3e},{phase}")
 
         mloss = np.mean(mloss)
         macc = np.mean(macc)
