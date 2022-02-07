@@ -65,18 +65,27 @@ if __name__ == "__main__":
 
     device = args.device
     criterion = nn.CrossEntropyLoss()
-    transform = T.Compose([
+    train_transform = T.Compose([
+        T.ToTensor(),
+        T.Normalize(
+            (0.5070751592371323, 0.48654887331495095, 0.4409178433670343),
+            (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)),
+    ])
+    val_transform = T.Compose([
+        T.RandomCrop(32, padding=4),
+        T.RandomHorizontalFlip(),
+        T.RandomRotation(15),
         T.ToTensor(),
         T.Normalize(
             (0.5070751592371323, 0.48654887331495095, 0.4409178433670343),
             (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)),
     ])
     trainloader = torch.utils.data.DataLoader(
-        Dataset(train=True, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
+        Dataset(train=True, download=True, transform=train_transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
     valloader = torch.utils.data.DataLoader(
-        Dataset(train=False, download=True, transform=transform, root='../data/cifar100'), batch_size=args.batchsize,
+        Dataset(train=False, download=True, transform=val_transform, root='../data/cifar100'), batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
     model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)
