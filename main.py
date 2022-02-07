@@ -13,6 +13,7 @@ from model import modeldic
 def operate(phase):
     mloss = []
     macc = []
+    log = {}
     with torch.set_grad_enabled(phase == 'train'):
 
         if phase == 'train':
@@ -29,16 +30,17 @@ def operate(phase):
             acc = (output.argmax(1) == target).float().mean()
             mloss.append(loss.item())
             macc.append(acc.item())
-            if (args.wandb): wandb.log({f'{phase}/loss': loss.item(), f'{phase}/acc': acc.item()})
+            log.update({f'{phase}/loss': loss.item(), f'{phase}/acc': acc.item()})
             if (phase == 'train'):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
                 if (scheduler is not None):
-                    scheduler.step(epoch=e*len(trainloader)+idx)
-                    if (args.wandb): wandb.log({'lr': optimizer.param_groups[0]['lr']})
+                    scheduler.step(epoch=e * len(trainloader) + idx)
+                    log.update({'lr': optimizer.param_groups[0]['lr']})
 
             print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},lr={optimizer.param_groups[0]['lr']:.3e},{phase}")
+            if (args.wandb): wandb.log(log)
 
         mloss = np.mean(mloss)
         macc = np.mean(macc)
@@ -63,7 +65,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if (args.wandb): import wandb
 
-    device = args.device
+    device = args.device if args.device == 'cuda' and torch.cuda.is_available() else 'cpu'
     criterion = nn.CrossEntropyLoss()
     train_transform = T.Compose([
         T.ToTensor(),
@@ -81,11 +83,13 @@ if __name__ == "__main__":
             (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)),
     ])
     trainloader = torch.utils.data.DataLoader(
-        Dataset(train=True, download=True, transform=train_transform, root='../data/cifar100'), batch_size=args.batchsize,
+        Dataset(train=True, download=True, transform=train_transform, root='../data/cifar100'),
+        batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
     valloader = torch.utils.data.DataLoader(
-        Dataset(train=False, download=True, transform=val_transform, root='../data/cifar100'), batch_size=args.batchsize,
+        Dataset(train=False, download=True, transform=val_transform, root='../data/cifar100'),
+        batch_size=args.batchsize,
         shuffle=True,
         num_workers=cpu_count())
     model = modeldic[args.model](num_classes=100, parameter_share=args.paramshare).to(device)

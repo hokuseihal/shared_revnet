@@ -161,3 +161,7 @@ def resnet152():
 
 
 models={"resnet2_50":resnet50}
+if __name__=='__main__':
+    m=resnet50()
+    x=torch.randn(1,3,128,128)
+    y=m(x)

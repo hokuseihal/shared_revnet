@@ -391,3 +391,8 @@ def wide_resnet101_2(pretrained: bool = False, progress: bool = True, **kwargs: 
 models = {"resnet18": resnet18, "resnet34": resnet34, "resnet50": resnet50,
           "resnet101": resnet101, "resnet152": resnet152, "wide_resnet50_2": wide_resnet50_2,
           "wide_resnet101_2": wide_resnet101_2, "rextnet50_32x4d": resnext50_32x4d(), "rextnet101_32x8d": resnext101_32x8d}
+
+if __name__ == '__main__':
+    m = resnet50()
+    x = torch.randn(1, 3, 128, 128)
+    y = m(x)
