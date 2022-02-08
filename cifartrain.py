@@ -79,9 +79,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        n_iter = (epoch - 1) * len(cifar100_training_loader) + batch_index + 1
 
-        last_layer = list(net.children())[-1]
         print('Training Epoch: {epoch} [{trained_samples}/{total_samples}]\tLoss: {:0.4f}\tLR: {:0.6f}'.format(
             loss.item(),
             optimizer.param_groups[0]['lr'],
@@ -89,7 +87,7 @@ def train(epoch):
             trained_samples=batch_index * args.b + len(images),
             total_samples=len(cifar100_training_loader.dataset)
         ))
-        wandb.log({"train/loss":loss.item(),'lr':optimizer.param_groups[0]['lr']})
+        # wandb.log({"train/loss":loss.item(),'lr':optimizer.param_groups[0]['lr']})
 
         if epoch <= args.warm:
             warmup_scheduler.step()
@@ -122,7 +120,7 @@ def eval_training(epoch=0):
         np.mean(test_loss),
         correct.float() / len(cifar100_test_loader.dataset),
     ))
-    wandb.log({'val/loss':np.mean(test_loss),'val/acc':correct.float/len(cifar100_test_loader)})
+    # wandb.log({'val/loss':np.mean(test_loss),'val/acc':correct.float/len(cifar100_test_loader)})
 
     return correct.float() / len(cifar100_test_loader.dataset)
 from torch.optim.lr_scheduler import _LRScheduler
@@ -143,7 +141,7 @@ class WarmUpLR(_LRScheduler):
         """
         return [base_lr * self.last_epoch / (self.total_iters + 1e-8) for base_lr in self.base_lrs]
 if __name__ == '__main__':
-    wandb.init(project='shared_revnet',name='cifar100github_code')
+    # wandb.init(project='shared_revnet',name='cifar100github_code')
     parser = argparse.ArgumentParser()
     parser.add_argument('-net', type=str, default='resnet50', help='net type')
     parser.add_argument('-gpu', action='store_true', default=False, help='use gpu or not')
@@ -176,7 +174,7 @@ if __name__ == '__main__':
 
 
     loss_function = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     train_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=MILESTONES, gamma=0.2) #learning rate decay
     iter_per_epoch = len(cifar100_training_loader)
     warmup_scheduler = WarmUpLR(optimizer, iter_per_epoch * args.warm)

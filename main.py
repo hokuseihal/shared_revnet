@@ -27,6 +27,7 @@ def operate(phase):
             model.eval()
             loader = valloader
         for idx, (data, target) in enumerate(loader):
+
             data = data.to(device)
             target = target.to(device)
             output = model(data)
@@ -39,12 +40,15 @@ def operate(phase):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                if (scheduler is not None):
+                if e == 0:
+                    warmup_scheduler.step()
+                if (scheduler is not None and e>=1):
                     scheduler.step(epoch=e * len(trainloader) + idx)
                     log.update({'lr': optimizer.param_groups[0]['lr']})
 
+
+                if (args.wandb): wandb.log(log)
             print(f"{e=},{idx}/{len(loader)},{loss=:2.4f},{acc=:2.4f},lr={optimizer.param_groups[0]['lr']:.3e},{phase}")
-            if (args.wandb): wandb.log(log)
 
         mloss = np.mean(mloss)
         macc = np.mean(macc)
@@ -105,8 +109,10 @@ if __name__ == "__main__":
         assert NotImplementedError
 
     scheduler = None
+    from cifartrain import WarmUpLR
     if (args.setting is not None):
         optimizer, scheduler = get_optim_scheduler(args.setting, model, args.epoch * len(trainloader))
+    warmup_scheduler = WarmUpLR(optimizer, len(trainloader))
 
     if (args.wandb): wandb.init(project='shared_revnet', name=args.model + args.tag)
     for e in range(args.epoch):
