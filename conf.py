@@ -49,12 +49,11 @@ def get_optim_scheduler(key, model, epoch=None):
             T.RandomHorizontalFlip(),
             T.RandomRotation(15),
             T.ColorJitter(),
-            T.ToTensor(),
-            T.RandomErasing(),
             T.RandomAutocontrast(),
             T.RandomGrayscale(),
             T.RandomVerticalFlip(),
             T.ToTensor(),
+            T.RandomErasing(),
             T.Normalize(
                 (0.5070751592371323, 0.48654887331495095, 0.4409178433670343),
                 (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)),
